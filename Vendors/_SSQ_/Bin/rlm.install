@@ -1,0 +1,46 @@
+#!/bin/sh
+
+case $MACHINE in
+	MSYS_NT-*) # This is Windows
+
+		LICENSEFILE="`echo "$SCRIPTDIR/Licenses/rlm_SSQ.lic" | tr '/' '\\'`"
+		LOGFILE="`echo "$SCRIPTDIR/Logs/rlm.log" | tr '/' '\\'`"
+
+		if [ -e "$SCRIPTDIR/Licenses/rlm_SSQ.lic" ]
+		then
+			echo "Installing RLM..."
+
+			"$SCRIPTDIR/Bin/rlm.exe" -install_service -service_name "SSQ RLM Service" -c "$LICENSEFILE" -dlog "$LOGFILE" -nows -noudp
+			"$WINDIR/System32/SC.EXE" CONFIG "SSQ RLM Service" start= auto obj= "NT AUTHORITY\\LocalService" password= ""
+			"$WINDIR/System32/SC.EXE" start "SSQ RLM Service"
+		fi
+	;;
+	Linux)	# This is Linux
+
+		LICENSEFILE="$SCRIPTDIR/Licenses/rlm_SSQ.lic"
+		LOGFILE="$SCRIPTDIR/Logs/rlm.log"
+
+		if [ -e "$LICENSEFILE" ]
+		then
+			echo "Installing RLM..."
+
+			install_service "SSQ RLM Service" "rlmsrvssq" nodaemon "$SCRIPTDIR/Bin/rlm" -c "$LICENSEFILE" -dlog "$LOGFILE" -nows -noudp
+		fi
+	;;
+	Darwin)	# This is MacOS
+
+		LICENSEFILE="$SCRIPTDIR/Licenses/rlm_SSQ.lic"
+		LOGFILE="$SCRIPTDIR/Logs/rlm.log"
+
+		if [ -e "$LICENSEFILE" ]
+		then
+			echo "Installing RLM..."
+
+			install_service "SSQ RLM Service" "rlmsrvssq" nodaemon "$SCRIPTDIR/Bin/rlm" -c "$LICENSEFILE" -dlog "$LOGFILE" -nows -noudp
+		fi
+	;;
+	*)	echo "$MACHINE is not supported! Exiting..."
+		exit 1
+	;;
+esac
+

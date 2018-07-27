@@ -1,0 +1,85 @@
+#!/bin/sh
+
+case $MACHINE in
+	MSYS_NT-*) # This is Windows
+
+		LMGRD="`echo "$SCRIPTDIR/Bin/lmgrd.exe" | tr '/' '\\'`"
+		LICENSEFILE="`echo "$SCRIPTDIR/Licenses/lmgrd_SSQ.lic" | tr '/' '\\'`"
+		LOGFILE="`echo "$SCRIPTDIR/Logs/lmgrd.log" | tr '/' '\\'`"
+
+		# check if flexlm license is present, otherwise skip
+
+		if [ -e "$SCRIPTDIR/Licenses/lmgrd_SSQ.lic" ]
+		then
+			echo "Installing LMGRD..."
+
+			"$SCRIPTDIR/Bin/installs.exe" -c "$LICENSEFILE" -e "$LMGRD" -l "$LOGFILE" -n "SSQ FLEXLM Service"
+			"$WINDIR/System32/SC.EXE" CONFIG "SSQ FLEXLM Service" start= auto obj= "NT AUTHORITY\\LocalService" password= ""
+			"$WINDIR/System32/SC.EXE" start "SSQ FLEXLM Service"
+		fi
+	;;
+	Linux)	# This is Linux
+
+		LICENSEFILE="$SCRIPTDIR/Licenses/lmgrd_SSQ.lic"
+		LOGFILE="$SCRIPTDIR/Logs/lmgrd.log"
+
+		# check if flexlm license is present, otherwise skip
+
+		if [ -e "$LICENSEFILE" ]
+		then
+			echo "Installing LMGRD..."
+
+			install_service "SSQ FLEXLM Service" flexlmsrvssq daemon "$SCRIPTDIR/Bin/lmgrd" -c "$LICENSEFILE" -l "$LOGFILE"
+
+			# detect presence of /lib64/ld-lsb-x86-64.so.3
+
+			if [ ! -e /lib64/ld-lsb-x86-64.so.3 ]
+			then
+				LD_LINUX="`find /lib64/ -name "ld-linux-x86-64*"`"
+				[ -z "$LD_LINUX" ] && echo "Cannot find a source for symlink to /lib64/ld-lsb-x86-64.so.3! Exiting..." && exit 1
+				ln -s "$LD_LINUX" /lib64/ld-lsb-x86-64.so.3
+			fi
+
+			# detect presence of /lib/ld-lsb.so.3
+
+			if [ ! -e /lib/ld-lsb.so.3 ]
+			then
+				LD_LINUX="`find /lib/ -name "ld-linux.*"`"
+				[ -z "$LD_LINUX" ] && echo "Cannot find a source for symlink to /lib/ld-lsb.so.3! Exiting..." && exit 1
+				ln -s "$LD_LINUX" /lib/ld-lsb.so.3
+			fi
+
+			# add hostname to /etc/hosts
+
+			sed -i -n "/# FOR UNIVERSAL LICENSE SERVER BY TEAM SOLIDSQUAD-SSQ/!p" /etc/hosts
+			echo "127.0.0.1 `hostname` # FOR UNIVERSAL LICENSE SERVER BY TEAM SOLIDSQUAD-SSQ" >> /etc/hosts
+			echo "::1 `hostname` # FOR UNIVERSAL LICENSE SERVER BY TEAM SOLIDSQUAD-SSQ" >> /etc/hosts
+		fi
+	;;
+	Darwin)	# This is MacOS
+
+		LICENSEFILE="$SCRIPTDIR/Licenses/lmgrd_SSQ.lic"
+		LOGFILE="$SCRIPTDIR/Logs/lmgrd.log"
+
+		# check if flexlm license is present, otherwise skip
+
+		if [ -e "$LICENSEFILE" ]
+		then
+			echo "Installing LMGRD..."
+
+			install_service "SSQ FLEXLM Service" flexlmsrvssq nodaemon "$SCRIPTDIR/Bin/lmgrd" -c "$LICENSEFILE" -l "$LOGFILE" -z
+
+			# add hostname to /etc/hosts
+
+			sed -n "/# FOR UNIVERSAL LICENSE SERVER BY TEAM SOLIDSQUAD-SSQ/!p" /etc/hosts > /etc/hosts.1
+			mv /etc/hosts.1 /etc/hosts
+
+			echo "127.0.0.1 `hostname` # FOR UNIVERSAL LICENSE SERVER BY TEAM SOLIDSQUAD-SSQ" >> /etc/hosts
+			echo "::1 `hostname` # FOR UNIVERSAL LICENSE SERVER BY TEAM SOLIDSQUAD-SSQ" >> /etc/hosts
+		fi
+	;;
+	*)	echo "$MACHINE is not supported! Exiting..."
+		exit 1
+	;;
+esac
+

@@ -1,0 +1,67 @@
+#!/bin/sh
+
+
+case $MACHINE in
+	MSYS_NT-*) # This is Windows
+
+		LICENSEFILE="$SCRIPTDIR/Licenses/lmgrd_SSQ.lic"
+
+		if [ -e "$LICENSEFILE" ]
+		then
+			echo "Uninstalling LMGRD..."
+
+			"$WINDIR/System32/SC.EXE" stop "SSQ FLEXLM Service"
+			"$SCRIPTDIR/Bin/installs.exe" -r -n "SSQ FLEXLM Service"
+
+			while true
+			do
+				ANYVENDORRUNNING=0
+				grep "^VENDOR" "$LICENSEFILE" | while read VENDORLINE
+				do
+					VENDORNAME="`echo "$VENDORLINE" | awk '{print $2}'`"
+					"$WINDIR/System32/CMD.EXE" /C "$WINDIR/System32/TASKLIST.EXE /FO CSV /NH /FI \"IMAGENAME eq $VENDORNAME.exe\"" | grep "$VENDORNAME" >/dev/null
+					[ $? -eq 0 ] && ANYVENDORRUNNING=1
+				done
+
+				[ $ANYVENDORRUNNING -eq 0 ] && break
+				echo "Waiting for FlexLM vendors to shutdown gracefully..."
+				sleep 2
+			done
+		fi
+	;;
+	Linux)	# This is Linux
+
+		LICENSEFILE="$SCRIPTDIR/Licenses/lmgrd_SSQ.lic"
+
+		if [ -e "$LICENSEFILE" ]
+		then
+			echo "Uninstalling LMGRD..."
+
+			uninstall_service flexlmsrvssq
+
+			# rename hostname from /etc/hosts
+
+			sed -i -n "/# FOR UNIVERSAL LICENSE SERVER BY TEAM SOLIDSQUAD-SSQ/!p" /etc/hosts
+		fi
+	;;
+	Darwin)	# This is MacOS
+
+		LICENSEFILE="$SCRIPTDIR/Licenses/lmgrd_SSQ.lic"
+
+		if [ -e "$LICENSEFILE" ]
+		then
+			echo "Uninstalling LMGRD..."
+
+			uninstall_service flexlmsrvssq
+
+			# rename hostname from /etc/hosts
+
+			sed -n "/# FOR UNIVERSAL LICENSE SERVER BY TEAM SOLIDSQUAD-SSQ/!p" /etc/hosts > /etc/hosts.1
+			mv /etc/hosts.1 /etc/hosts
+		fi
+	;;
+	*)	echo "$MACHINE is not supported! Exiting..."
+		exit 1
+	;;
+esac
+

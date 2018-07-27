@@ -1,0 +1,5 @@
+The files in SolidSQUAD_License_Servers\Bin folder SHOULD NOT BE EDITED OR REPLACED!
+
+Use the update_config.bat or update_config.sh to update configuration on vendor addition/removal
+
+TeAM SolidSQUAD-SSQ

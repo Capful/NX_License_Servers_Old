@@ -1,0 +1,41 @@
+#!/bin/sh
+
+case $MACHINE in
+	MSYS_NT-*) # This is Windows
+
+		LICENSEFILE="$SCRIPTDIR/Licenses/rlm_SSQ.lic"
+
+		if [ -e "$LICENSEFILE" ]
+		then
+			echo "Uninstalling RLM..."
+
+			"$WINDIR/System32/SC.EXE" stop "SSQ RLM Service"
+			"$SCRIPTDIR/Bin/rlm.exe" -delete_service -service_name "SSQ RLM Service"
+		fi
+	;;
+	Linux)	# This is Linux
+
+		LICENSEFILE="$SCRIPTDIR/Licenses/rlm_SSQ.lic"
+
+		if [ -e "$LICENSEFILE" ]
+		then
+			echo "Uninstalling RLM..."
+			uninstall_service rlmsrvssq
+		fi
+	;;
+	Darwin)	# This is MacOS
+
+		LICENSEFILE="$SCRIPTDIR/Licenses/rlm_SSQ.lic"
+
+		if [ -e "$LICENSEFILE" ]
+		then
+			echo "Uninstalling RLM..."
+	
+			uninstall_service rlmsrvssq
+		fi
+	;;
+	*)	echo "$MACHINE is not supported! Exiting..."
+		exit 1
+	;;
+esac
+
