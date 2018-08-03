@@ -108,6 +108,26 @@ Function anzhuang
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment"  /TIMEOUT=5000
   Exch $R1
 FunctionEnd
+
+Function .onInit
+  ;关闭进程
+  Push $R0
+  CheckProc:
+  Push "ugraf.exe"
+  ProcessWork::existsprocess
+  Pop $R0
+  IntCmp $R0 0 Done
+  MessageBox MB_OKCANCEL|MB_ICONSTOP "安装程序检测到 UG 正在运行。$\r$\n$\r$\n点击 “确定” 强制关闭UG，请确认保存UG文档。$\r$\n点击 “取消” 退出许可证安装程序。" IDCANCEL Exit
+  Push "ugraf.exe"
+  Processwork::KillProcess
+  Sleep 1000
+  Goto CheckProc
+  Exit:
+  Abort
+  Done:
+  Pop $R0
+FunctionEnd
+
 /******************************
  *  以下是安装程序的卸载部分  *
  ******************************/
@@ -120,6 +140,21 @@ SectionEnd
 #-- 根据 NSIS 脚本编辑规则，所有 Function 区段必须放置在 Section 区段之后编写，以避免安装程序出现未可预知的问题。--#
 
 Function un.onInit
+  ;关闭进程
+  Push $R0
+  CheckProc:
+  Push "ugraf.exe"
+  ProcessWork::existsprocess
+  Pop $R0
+  IntCmp $R0 0 Done
+  MessageBox MB_OKCANCEL|MB_ICONSTOP "卸载程序检测到 UG 正在运行。$\r$\n$\r$\n点击 “确定” 强制关闭UG，请确认保存UG文档。$\r$\n点击 “取消” 退出卸载程序。" IDCANCEL Exit
+  Push "ugraf.exe"
+  Processwork::KillProcess
+  Sleep 1000
+  Goto CheckProc
+  Exit:
+  Abort
+  Done:
   MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "您确实要完全移除 $(^Name) ，及其所有的组件？" IDYES +2
   Abort
   Call un.xiezai
